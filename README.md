@@ -26,3 +26,9 @@ Stefan Chen
 stefan.chen@duke.edu
 
 Office hours: TBD
+
+**Student Name**
+
+Abbhijith Hari Gopal
+
+ah580@duke.edu
