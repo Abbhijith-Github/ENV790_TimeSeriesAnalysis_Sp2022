@@ -248,7 +248,7 @@ inflow_data_new <- cbind(my_date, ts_inflow_data)
 Some test only work for non-seasonal data. SO let's create another series with yearly averages for inflow.
 
 ```{r}
-iHP=1
+iHP=7
 #Group data in yearly steps instances
 inflow_data_matrix <- matrix(ts_inflow_data[,iHP],byrow=FALSE,nrow=12)
 inflow_data_yearly <- colMeans(inflow_data_matrix)
