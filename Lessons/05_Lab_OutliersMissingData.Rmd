@@ -80,7 +80,7 @@ tsclean() from package 'forecast' identify and replace outliers and missing valu
 ```{r}
 
 clean_wind_data <- tsclean(ts_wind_data)  #object should be a time series
-
+head(clean_wind_data, 10)
 full_wind_data <- data_frame(Date=wind_data$DATE, Wind = wind_data$AWND.1, Wind_Clean = as.numeric(clean_wind_data))
 
 ggplot(full_wind_data) +
@@ -110,17 +110,22 @@ Additional info on decompose()
 
 ```{r}
 #Ex1: Using R decompose function decompose the wind data in seasonal, trend and random
-
+decompose_data = decompose(clean_wind_data)
+plot(decompose_data)
 
 #Ex2: Store the three component in separate vector
-  
+random_wind = decompose_data$random
+trend_wind = decompose_data$trend
+season_wind = decompose_data$seasonal
+
 
 #Ex3: Create one data frame with all three vector and the Date columns from wind_data
-
+df_wind_decomposed = data.frame("date" = full_wind_data$Date, random_wind, trend_wind, season_wind)
 
 #Ex4: Inspect the data frame using head() and tail()
 
-
+head(df_wind_decomposed, 10)
+tail(df_wind_decomposed, 10)
 
 # Discuss the results
 
