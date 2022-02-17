@@ -114,7 +114,9 @@ summary(diff_lin_trend) #differenced data
 print(paste("The slope is", beta1, "and intercept is", beta0))
 
 ```
-From the output of the regression analysis for detrended and differenced series, we can observe that for detrended series, the slope is `r linear_trend_beta1` and intercept is `r linear_trend_beta0`; for differenced series, the slope is `r beta1` and intercept is `r beta0`. 
+From the output of the regression analysis for detrended and differenced series, we can observe that for detrended series, the slope is `r linear_trend_beta1` and intercept is `r linear_trend_beta0`; for differenced series, the slope is `r beta1` and intercept is `r beta0`. \
+Interpretation: For detrended series by regression: The renewable energy production increases by `r linear_trend_beta1` trillion Btu in 1 year, keeping all other variables constant. \
+For differenced series: The renewable energy production increases by `r beta1` trillion Btu in 1 year, keeping all other variables constant.
 
 ### Q3
 Create a data frame with 4 columns: month, original series, detrended by Regression Series and differenced series. Make sure you properly name all columns. Also note that the differenced series will have only 584 rows because you loose the first observation when differencing. Therefore, you need to remove the first observations for the original series and the detrended by regression series to build the new data frame.
