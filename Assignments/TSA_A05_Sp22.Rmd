@@ -1,7 +1,7 @@
 ---
 title: "ENV 790.30 - Time Series Analysis for Energy Data | Spring 2022"
 subtitle: "Assignment 5 - Due date 02/28/22"
-author: "Student Name"
+author: "Abbhijith Hari Gopal"
 output: pdf_document
 geometry: margin=2.54cm
 editor_options: 
@@ -21,14 +21,13 @@ R packages needed for this assignment are listed below. Install these packages, 
 ```{r}
 #Load/install required package here
 library(xlsx)
+library(readxl)
 library(forecast)
 library(tseries)
 library(ggplot2)
 library(Kendall)
 library(lubridate)
 library(tidyverse)  #load this package so yon clean the data frame using pipes
-
-
 ```
 
 ## Decomposing Time Series
@@ -55,8 +54,25 @@ nvar=ncol(energy_data)
 For this assignment you will work only with the following columns: Solar Energy Consumption and Wind Energy Consumption. Create a data frame structure with these two time series only and the Date column. Drop the rows with *Not Available* and convert the columns to numeric. You can use filtering to eliminate the initial rows or convert to numeric and then use the drop_na() function. If you are familiar with pipes for data wrangling, try using it!
 
 ```{r}
+date_of_interest = energy_data[, 1]
+Solar_Wind = energy_data[, 8:9]
+head(date_of_interest, 5) #As a check
+head(Solar_Wind, 5) #As a check
 
+#converting to numeric
+Solar_Wind$`Solar Energy Consumption` = as.numeric(Solar_Wind$`Solar Energy Consumption`)
+Solar_Wind$`Wind Energy Consumption` = as.numeric(Solar_Wind$`Wind Energy Consumption`)
+class(Solar_Wind$`Solar Energy Consumption`) #As a check
+class(Solar_Wind$`Wind Energy Consumption`) #As a check
 
+#new data frame of interest
+converted_df = cbind(date_of_interest, Solar_Wind)
+head(converted_df, 5) #As a check
+class(converted_df)#As a check
+
+#dropping NA
+Solar_Wind = drop_na(Solar_Wind)
+head(Solar_Wind, 5) #As a check
 ```
 
 ### Q2
@@ -64,7 +80,13 @@ For this assignment you will work only with the following columns: Solar Energy 
 Plot the Solar and Wind energy consumption over time using ggplot. Plot each series on a separate graph. No need to add legend. Add informative names to the y axis using `ylab()`. Explore the function scale_x\_date() on ggplot and see if you can change the x axis to improve your plot. Hint: use *scale_x\_date(date_breaks = "5 years", date_labels = "%Y")")*
 
 ```{r}
-
+ggplot(data = converted_df) + 
+  geom_line(aes(x = converted_df[, 1], y = converted_df[, 2]), color = "Red") + 
+  geom_line(aes(x = converted_df[, 1], y = converted_df[, 3]), color = "Blue") +
+  ylab("Energy Consumption (Trillion Btu)") + 
+  xlab("Date") + 
+  scale_x_date(date_breaks = "5 years", date_labels = "%Y") + 
+  ggtitle("Solar and Wind Consumption plot")
 ```
 
 ### Q3
@@ -72,9 +94,16 @@ Plot the Solar and Wind energy consumption over time using ggplot. Plot each ser
 Now plot both series in the same graph, also using ggplot(). Look at lines 142-149 of the file `05_Lab_OutliersMissingData_Solution` to learn how to manually add a legend to ggplot. Make the solar energy consumption red and wind energy consumption blue. Add informative name to the y axis using `ylab("Energy Consumption)`. And use function scale_x\_date() again to improve x axis.
 
 ```{r}
-
-
-
+ggplot(data = converted_df) + 
+  geom_line(aes(x = converted_df[, 1], y = converted_df[, 2], color = "Solar")) + 
+  geom_line(aes(x = converted_df[, 1], y = converted_df[, 3], color = "Wind")) +
+  ylab("Energy Consumption (Trillion Btu)") + 
+  xlab("Date") + 
+  scale_colour_manual("", 
+                      breaks = c("Solar", "Wind"),
+                      values = c("Solar"="red", "Wind"="blue")) +
+  scale_x_date(date_breaks = "5 years", date_labels = "%Y") + 
+  ggtitle("Solar and Wind Consumption plot")
 ```
 
 ### Q3
@@ -82,32 +111,67 @@ Now plot both series in the same graph, also using ggplot(). Look at lines 142-1
 Transform wind and solar series into a time series object and apply the decompose function on them using the additive option, i.e., `decompose(ts_data, type = "additive")`. What can you say about the trend component? What about the random component? Does the random component look random? Or does it appear to still have some seasonality on it?
 
 ```{r}
+#converting to time series object
+converted_df_ts = ts(converted_df, frequency = 12)
+class(converted_df_ts) #As a check
 
+#Decomposing
+Solar_decompose = decompose(converted_df_ts[, 2], type = "additive")
+Wind_decompose = decompose(converted_df_ts[, 3], type = "additive")
+
+#plotting the decomposed data
+plot(Solar_decompose)
+plot(Wind_decompose)
 ```
+**The trend appears to be increasing for both solar and wind consumption - positive trend. The random component has seasonality in it for both solar and wind consumption although, its more conspicuous for solar than wind. **
+
 
 ### Q4
 
 Use the decompose function again but now change the type of the seasonal component from additive to multiplicative. What happened to the random component this time?
 
 ```{r}
+#Decomposing
+Solar_decompose = decompose(converted_df_ts[, 2], type = "multiplicative")
+Wind_decompose = decompose(converted_df_ts[, 3], type = "multiplicative")
 
+#plotting the decomposed data
+plot(Solar_decompose)
+plot(Wind_decompose)
 ```
+**The random component has become a lot better in that the seasonality has been removed, although not completely, due to the introduction of type="multiplicative"for both solar and wind consumption.**
+
 
 ### Q5
 
 When fitting a model to this data, do you think you need all the historical data? Think about the data from 90s and early 20s. Are there any information from those years we might need to forecast the next six months of Solar and/or Wind consumption. Explain your response.
 
-> Answer:
+> Answer: Well, it doesn't look like we need all of the histroical data from 90s. It looks like we can just start from 2000 for the wind power consumption and start from 2010 for the solar power consumption. the reason for this is because, prior to those dates, the trend polts for both of 'em remains constant and remain closer to 0. Therefore, any further data prior won't help in better fitting the model and forecasting future values. 
 
 ### Q6
 
 Create a new time series object where historical data starts on January 2012. Hint: use `filter()` function so that you don't need to point to row numbers, .i.e, `filter(xxxx, year(Date) >= 2012 )`. Apply the decompose function `type=additive` to this new time series. Comment the results. Does the random component look random? Think about our discussion in class about trying to remove the seasonal component and the challenge of trend on the seasonal component.
 
 ```{r}
+new_converted_df = converted_df %>%
+  filter(year(converted_df[, 1]) >= 2012)
 
+head(new_converted_df, 50) #As a check
+
+#converting to time series object
+converted_df_new_ts = ts(new_converted_df, frequency = 12)
+head(converted_df_new_ts, 5) #As a check
+class(converted_df_new_ts) #As a check
+
+#Decomposing
+Solar_new_decompose = decompose(converted_df_new_ts[, 2], type = "additive")
+Wind_new_decompose = decompose(converted_df_new_ts[, 3], type = "additive")
+
+#plotting the decomposed data
+plot(Solar_new_decompose)
+plot(Wind_new_decompose)
 ```
 
-> Answer:
-
+> Answer: There is a massive shift now. First. the trend, as before is indeed increasing but, this time we see a much steady increase for both solar and wind consumption. With regard to random component, there is seasonality in both the solar consumption and wind consumption but it is very apparent in solar than it is for wind. Differencing is one possible way to remove seasonlity at this point. 
 
 
